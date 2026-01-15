@@ -41,3 +41,18 @@ android {
     abortOnError false
   }
 }
+
+repositories {
+  flatDir {
+    dirs "$projectDir/libs"
+  }
+}
+
+// 替换成你下载的版本，我用的最新的版本
+def localJPush = file("$projectDir/libs/jpush-5.9.2.aar")
+def localJCore = file("$projectDir/libs/jcore-5.2.8.aar")
+
+dependencies {
+  implementation files(localJPush)
+  implementation files(localJCore)
+}
