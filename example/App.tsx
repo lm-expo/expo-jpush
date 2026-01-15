@@ -1,30 +1,30 @@
 import { useEvent } from 'expo';
 import ExpoJpush from 'expo-jpush';
+import { useEffect, useState } from 'react';
 import { Button, SafeAreaView, ScrollView, Text, View } from 'react-native';
 
 export default function App() {
-  const onChangePayload = useEvent(ExpoJpush, 'onChange');
+  const [registrationID, setRegistrationID] = useState('');
+
+  useEffect(() => {
+    ExpoJpush.init({ debug: true }).then(setRegistrationID);
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.container}>
         <Text style={styles.header}>Module API Example</Text>
-        <Group name="Constants">
-          <Text>{ExpoJpush.PI}</Text>
+        <Group name="registrationID">
+          <Text>{registrationID}</Text>
         </Group>
-        <Group name="Functions">
-          <Text>{ExpoJpush.hello()}</Text>
-        </Group>
-        <Group name="Async functions">
+        <Group name="get registrationID">
           <Button
-            title="Set value"
+            title="get registrationID"
             onPress={async () => {
-              await ExpoJpush.setValueAsync('Hello from JS!');
+              const registrationID = await ExpoJpush.getRegistrationID();
+              console.log('registrationID', registrationID);
             }}
           />
-        </Group>
-        <Group name="Events">
-          <Text>{onChangePayload?.value}</Text>
         </Group>
       </ScrollView>
     </SafeAreaView>
