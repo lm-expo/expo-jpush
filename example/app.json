@@ -27,6 +27,15 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-jpush",
+        {
+          "channel": "dev",
+          "appKey": "26f40a74dc7ffc9013767e6b"
+        }
+      ]
+    ]
   }
 }
