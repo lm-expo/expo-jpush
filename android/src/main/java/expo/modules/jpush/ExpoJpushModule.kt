@@ -2,7 +2,6 @@ package expo.modules.jpush
 
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
-import java.net.URL
 import cn.jpush.android.api.JPushInterface
 import android.util.Log
 import android.content.Intent
@@ -31,7 +30,8 @@ class ExpoJpushModule : Module() {
       var debug = options?.get("debug") as? Boolean ?: false
       JPushInterface.setDebugMode(debug)
       JPushInterface.init(context)
-      Log.d(TAG, "init success")
+      Log.d(TAG, "init called (debug=$debug)")
+      Log.d(TAG, "registrationId after init: ${JPushInterface.getRegistrationID(context) ?: ""}")
     }
 
     AsyncFunction("getRegistrationID") { ->
