@@ -3,9 +3,12 @@ package expo.modules.jpush
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 import cn.jpush.android.api.JPushInterface
+import cn.jiguang.bg.n
 import android.util.Log
 import android.content.Intent
 import java.lang.ref.WeakReference
+import org.json.JSONObject
+
 class ExpoJpushModule : Module() {
 
   init {
@@ -32,6 +35,8 @@ class ExpoJpushModule : Module() {
       JPushInterface.init(context)
       Log.d(TAG, "init called (debug=$debug)")
       Log.d(TAG, "registrationId after init: ${JPushInterface.getRegistrationID(context) ?: ""}")
+      flushPendingEvents()
+      JPushInterface.getRegistrationID(context) ?: ""
     }
 
     AsyncFunction("getRegistrationID") { ->
@@ -43,26 +48,101 @@ class ExpoJpushModule : Module() {
     }
   }
 
+  private fun parseExtras(raw: String?): Map<String, Any?>? {
+    if (raw == null) return null
+    return runCatching {
+      val json = JSONObject(raw)
+      json.keys().asSequence().associateWith { key -> json.opt(key) }
+    }.getOrElse {
+      Log.w(TAG, "Failed to parse JPush extras: ${it.message}")
+      null
+    }
+  }
+
+    private fun buildNotificationPayload(intent: Intent): Map<String, Any?> {
+    val title = intent.getStringExtra(JPushInterface.EXTRA_NOTIFICATION_TITLE)
+    val alert = intent.getStringExtra(JPushInterface.EXTRA_ALERT)
+    val extras = parseExtras(intent.getStringExtra(JPushInterface.EXTRA_EXTRA))
+    return mapOf(
+      "title" to title,
+      "content" to alert,
+      "extras" to extras
+    )
+  }
+
   private fun handleIndent(intent: Intent) {
     Log.d(TAG, "handleIndent: ${intent.action}")
     when (intent.action) {
 
+      JPushInterface.ACTION_REGISTRATION_ID -> {
+        val registrationId = intent.getStringExtra(JPushInterface.EXTRA_REGISTRATION_ID) ?: return
+        Log.d(TAG, "registrationId: $registrationId")
+        emitOrQueue("registration", mapOf("registrationId" to registrationId))
+      }
       JPushInterface.ACTION_NOTIFICATION_RECEIVED -> {
         Log.d(TAG, "ACTION_NOTIFICATION_RECEIVED")
         var registrationId = intent.getStringExtra(JPushInterface.EXTRA_REGISTRATION_ID) ?: return
         Log.d(TAG, "registrationId: $registrationId")
+        emitOrQueue(ExpoJpushEvents.REGISTRATION, mapOf("registrationId" to registrationId))
       }
+
+      JPushInterface.ACTION_MESSAGE_RECEIVED -> {
+        val message = intent.getStringExtra(JPushInterface.EXTRA_MESSAGE) ?: return
+        val extras = parseExtras(intent.getStringExtra(JPushInterface.EXTRA_EXTRA))
+        Log.d(TAG, "message: $message")
+        Log.d(TAG, "extras: $extras")
+        emitOrQueue(
+          "messageReceived",
+          mapOf(
+            "message" to message,
+            "extras" to extras
+          )
+        )
+      }
+
+      JPushInterface.ACTION_NOTIFICATION_OPENED -> {
+        emitOrQueue("notificationOpened", buildNotificationPayload(intent))
+      }
+
+      JPushInterface.ACTION_CONNECTION_CHANGE -> {
+        val connected = intent.getBooleanExtra(JPushInterface.EXTRA_CONNECTION_CHANGE, false)
+        Log.d(TAG, "connected: $connected")
+        emitOrQueue("connectionChange", mapOf("connected" to connected))
+      }
+    }
+  }
+
+  private fun emitOrQueue(name: String, payload: Map<String, Any?>) {
+    if (appContext.reactContext == null) {
+      synchronized(pendingEvents) {
+        pendingEvents.add(Pair(name, payload))
+      }
+    } else {
+      sendEvent(name, payload)
+    }
+  }
+  
+  private fun flushPendingEvents() {
+    synchronized(pendingEvents) {
+      pendingEvents.forEach { (name, payload) ->
+        sendEvent(name, payload)
+      }
+      pendingEvents.clear()
     }
   }
 
   companion object {
 
     private var currentModule: WeakReference<ExpoJpushModule>? = null
+    private val pendingEvents = mutableListOf<Pair<String, Map<String, Any?>>>()
 
-
-    fun handleBroadcast(intent: Intent) {
+    internal fun handleBroadcast(intent: Intent) {
       Log.d(TAG, "handleBroadcast: ${intent.action}")
       currentModule?.get()?.handleIndent(intent)
+    }
+
+    internal fun emitOrQueue(name: String, payload: Map<String, Any?>) {
+      currentModule?.get()?.emitOrQueue(name, payload)
     }
   }
 }

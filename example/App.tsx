@@ -6,6 +6,18 @@ import { Button, SafeAreaView, ScrollView, Text, View } from 'react-native';
 export default function App() {
   const [registrationID, setRegistrationID] = useState('');
 
+const registrationEvent = useEvent(ExpoJpush, 'registration');
+const messageReceivedEvent = useEvent(ExpoJpush, 'messageReceived');
+const notificationReceivedEvent = useEvent(ExpoJpush, 'notificationReceived');
+const notificationOpenedEvent = useEvent(ExpoJpush, 'notificationOpened');
+const connectionChangeEvent = useEvent(ExpoJpush, 'connectionChange');
+
+console.log('========== registrationEvent', registrationEvent);
+console.log('========== messageReceivedEvent', messageReceivedEvent);
+console.log('========== notificationReceivedEvent', notificationReceivedEvent);
+console.log('========== notificationOpenedEvent', notificationOpenedEvent);
+console.log('========== connectionChangeEvent', connectionChangeEvent);
+
   useEffect(() => {
     ExpoJpush.init({ debug: true }).then(setRegistrationID);
   }, []);
