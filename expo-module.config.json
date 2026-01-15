@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android", "web"],
+  "apple": {
+    "modules": ["ExpoJpushModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.jpush.ExpoJpushModule"]
+  }
+}

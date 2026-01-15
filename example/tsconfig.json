@@ -1,0 +1,10 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "expo-jpush": ["../src/index"],
+      "expo-jpush/*": ["../src/*"]
+    }
+  }
+}
