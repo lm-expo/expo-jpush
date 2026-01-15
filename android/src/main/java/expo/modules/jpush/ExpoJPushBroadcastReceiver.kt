@@ -6,7 +6,7 @@ import android.content.Intent
 import android.util.Log
 import expo.modules.jpush.TAG
 
-class ExpoJpushReceiver : BroadcastReceiver() {
+class ExpoJPushBroadcastReceiver : BroadcastReceiver() {
   override fun onReceive(context: Context?, intent: Intent?) {
     if (intent != null) {
       Log.d(TAG, "onReceive: ${intent.action}")

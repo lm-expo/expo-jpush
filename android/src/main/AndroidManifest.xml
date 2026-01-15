@@ -37,8 +37,20 @@
       android:exported="false"
       android:grantUriPermissions="true" />
 
+    <!-- JPush callback receiver (JPush SDK 5.9.x uses JPushMessageReceiver, not a Service) -->
     <receiver
-      android:name="expo.modules.jpush.ExpoJpushReceiver"
+      android:name="expo.modules.jpush.ExpoJPushMessageReceiver"
+      android:enabled="true"
+      android:exported="false"
+      android:permission="${applicationId}.permission.JPUSH_MESSAGE">
+      <intent-filter>
+        <action android:name="cn.jpush.android.intent.RECEIVE_MESSAGE" />
+        <category android:name="${applicationId}" />
+      </intent-filter>
+    </receiver>
+
+    <receiver
+      android:name="expo.modules.jpush.ExpoJPushBroadcastReceiver"
       android:exported="true"
       android:permission="${applicationId}.permission.JPUSH_MESSAGE">
       <intent-filter>

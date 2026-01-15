@@ -76,11 +76,9 @@ class ExpoJpushModule : Module() {
 
   private fun handleIndent(intent: Intent) {
     Log.d(TAG, "handleIndent: ${intent.action}")
-    val action = intent.action ?: return
     when (intent.action) {
 
-      // Some SDKs dispatch "cn.jpush.android.intent.REGISTRATION" (manifest), while constants may map to it.
-      JPushInterface.ACTION_REGISTRATION_ID, "cn.jpush.android.intent.REGISTRATION" -> {
+      JPushInterface.ACTION_REGISTRATION_ID -> {
         val registrationId = intent.getStringExtra(JPushInterface.EXTRA_REGISTRATION_ID) ?: return
         Log.d(TAG, "registrationId: $registrationId")
         emitOrQueue(ExpoJpushEvents.REGISTRATION, mapOf("registrationId" to registrationId))
