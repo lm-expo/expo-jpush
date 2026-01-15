@@ -3,7 +3,6 @@ package expo.modules.jpush
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 import cn.jpush.android.api.JPushInterface
-import cn.jiguang.bg.n
 import android.util.Log
 import android.content.Intent
 import java.lang.ref.WeakReference
@@ -23,8 +22,13 @@ class ExpoJpushModule : Module() {
     // Can be inferred from module's class name, but it's recommended to set it explicitly for clarity.
     // The module will be accessible from `requireNativeModule('ExpoJpush')` in JavaScript.
     Name("ExpoJpush")
-
-    var TAG = "EXPO_JPUSH"
+    Events(
+      ExpoJpushEvents.REGISTRATION,
+      ExpoJpushEvents.MESSAGE_RECEIVED,
+      ExpoJpushEvents.NOTIFICATION_RECEIVED,
+      ExpoJpushEvents.NOTIFICATION_OPENED,
+      ExpoJpushEvents.CONNECTION_CHANGE
+    )
 
     AsyncFunction("init") { options: Map<String, Any>? ->
       var context = appContext.reactContext?.applicationContext
@@ -59,7 +63,7 @@ class ExpoJpushModule : Module() {
     }
   }
 
-    private fun buildNotificationPayload(intent: Intent): Map<String, Any?> {
+  private fun buildNotificationPayload(intent: Intent): Map<String, Any?> {
     val title = intent.getStringExtra(JPushInterface.EXTRA_NOTIFICATION_TITLE)
     val alert = intent.getStringExtra(JPushInterface.EXTRA_ALERT)
     val extras = parseExtras(intent.getStringExtra(JPushInterface.EXTRA_EXTRA))
@@ -72,18 +76,18 @@ class ExpoJpushModule : Module() {
 
   private fun handleIndent(intent: Intent) {
     Log.d(TAG, "handleIndent: ${intent.action}")
+    val action = intent.action ?: return
     when (intent.action) {
 
-      JPushInterface.ACTION_REGISTRATION_ID -> {
+      // Some SDKs dispatch "cn.jpush.android.intent.REGISTRATION" (manifest), while constants may map to it.
+      JPushInterface.ACTION_REGISTRATION_ID, "cn.jpush.android.intent.REGISTRATION" -> {
         val registrationId = intent.getStringExtra(JPushInterface.EXTRA_REGISTRATION_ID) ?: return
         Log.d(TAG, "registrationId: $registrationId")
-        emitOrQueue("registration", mapOf("registrationId" to registrationId))
+        emitOrQueue(ExpoJpushEvents.REGISTRATION, mapOf("registrationId" to registrationId))
       }
       JPushInterface.ACTION_NOTIFICATION_RECEIVED -> {
         Log.d(TAG, "ACTION_NOTIFICATION_RECEIVED")
-        var registrationId = intent.getStringExtra(JPushInterface.EXTRA_REGISTRATION_ID) ?: return
-        Log.d(TAG, "registrationId: $registrationId")
-        emitOrQueue(ExpoJpushEvents.REGISTRATION, mapOf("registrationId" to registrationId))
+        emitOrQueue(ExpoJpushEvents.NOTIFICATION_RECEIVED, buildNotificationPayload(intent))
       }
 
       JPushInterface.ACTION_MESSAGE_RECEIVED -> {
@@ -92,7 +96,7 @@ class ExpoJpushModule : Module() {
         Log.d(TAG, "message: $message")
         Log.d(TAG, "extras: $extras")
         emitOrQueue(
-          "messageReceived",
+          ExpoJpushEvents.MESSAGE_RECEIVED,
           mapOf(
             "message" to message,
             "extras" to extras
@@ -101,13 +105,13 @@ class ExpoJpushModule : Module() {
       }
 
       JPushInterface.ACTION_NOTIFICATION_OPENED -> {
-        emitOrQueue("notificationOpened", buildNotificationPayload(intent))
+        emitOrQueue(ExpoJpushEvents.NOTIFICATION_OPENED, buildNotificationPayload(intent))
       }
 
       JPushInterface.ACTION_CONNECTION_CHANGE -> {
         val connected = intent.getBooleanExtra(JPushInterface.EXTRA_CONNECTION_CHANGE, false)
         Log.d(TAG, "connected: $connected")
-        emitOrQueue("connectionChange", mapOf("connected" to connected))
+        emitOrQueue(ExpoJpushEvents.CONNECTION_CHANGE, mapOf("connected" to connected))
       }
     }
   }

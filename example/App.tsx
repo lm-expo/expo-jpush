@@ -35,6 +35,7 @@ console.log('========== connectionChangeEvent', connectionChangeEvent);
             onPress={async () => {
               const registrationID = await ExpoJpush.getRegistrationID();
               console.log('registrationID', registrationID);
+              setRegistrationID(registrationID);
             }}
           />
         </Group>

@@ -1,9 +1,46 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <!-- JPush requires app-specific permission to receive messages -->
+  <permission
+    android:name="${applicationId}.permission.JPUSH_MESSAGE"
+    android:protectionLevel="signature" />
+  <uses-permission android:name="${applicationId}.permission.JPUSH_MESSAGE" />
+
   <application>
+    <!-- Required: service for core -->
+    <service
+      android:name="cn.jpush.android.service.JCommonService"
+      android:enabled="true"
+      android:exported="false" />
+
+    <!-- Required: message service -->
+    <service
+      android:name="cn.jpush.android.service.PushService"
+      android:enabled="true"
+      android:exported="false" />
+
+    <!-- Optional/compat: background keep-alive -->
+    <service
+      android:name="cn.jpush.android.service.DaemonService"
+      android:enabled="true"
+      android:exported="false" />
+
+    <!-- Optional: download service -->
+    <service
+      android:name="cn.jpush.android.service.DownloadService"
+      android:enabled="true"
+      android:exported="false" />
+
+    <!-- Required: provider -->
+    <provider
+      android:name="cn.jpush.android.service.DataProvider"
+      android:authorities="${applicationId}.DataProvider"
+      android:exported="false"
+      android:grantUriPermissions="true" />
+
     <receiver
       android:name="expo.modules.jpush.ExpoJpushReceiver"
       android:exported="true"
-    >
+      android:permission="${applicationId}.permission.JPUSH_MESSAGE">
       <intent-filter>
         <action android:name="cn.jpush.android.intent.REGISTRATION" />
         <action android:name="cn.jpush.android.intent.MESSAGE_RECEIVED" />
