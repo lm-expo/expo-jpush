@@ -9,5 +9,6 @@ internal object ExpoJpushEvents {
   const val NOTIFICATION_RECEIVED = "notificationReceived"
   const val NOTIFICATION_OPENED = "notificationOpened"
   const val CONNECTION_CHANGE = "connectionChange"
+  const val BADGE_NUMBER = "badge"
 }
 

@@ -50,6 +50,15 @@ class ExpoJpushModule : Module() {
       Log.d(TAG, "getRegistrationID: $registrationID")
       return@AsyncFunction registrationID
     }
+
+    AsyncFunction("setBadgeNumber") { params: Map<String, Any?>? ->
+      val context = appContext.reactContext
+      requireNotNull(context) { "React application context is not available yet." }
+      val number = (params?.get(ExpoJpushEvents.BADGE_NUMBER) as? Number)?.toInt()
+      if (number != null) {
+        JPushInterface.setBadgeNumber(context, number)
+      }
+    }
   }
 
   private fun parseExtras(raw: String?): Map<String, Any?>? {
