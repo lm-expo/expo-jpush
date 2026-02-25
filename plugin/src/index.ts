@@ -2,11 +2,17 @@ import {
   ConfigPlugin,
   withGradleProperties,
   withAppBuildGradle,
+  withInfoPlist,
+  withEntitlementsPlist,
 } from 'expo/config-plugins';
 
 type JPushConfig = {
   appKey: string;
   channel: string;
+  ios?: {
+    apsForProduction?: boolean;
+    apsEnvironment?: 'development' | 'production';
+  };
 };
 
 const PLACEHOLDERS_TAG_START = '// expo-jpush:manifestPlaceholders:start';
@@ -20,7 +26,15 @@ manifestPlaceholders += [
 ${PLACEHOLDERS_TAG_END}
 `;
 
-const withJPush: ConfigPlugin<JPushConfig> = (config, { appKey, channel }) => {
+const IOS_INFO_PLIST_APP_KEY = 'ExpoJpushAppKey';
+const IOS_INFO_PLIST_CHANNEL = 'ExpoJpushChannel';
+const IOS_INFO_PLIST_APS_FOR_PRODUCTION = 'ExpoJpushApsForProduction';
+
+const withJPush: ConfigPlugin<JPushConfig> = (config, props) => {
+  const { appKey, channel, ios } = props;
+  const apsForProduction = ios?.apsForProduction ?? false;
+  const apsEnvironment = ios?.apsEnvironment ?? (apsForProduction ? 'production' : 'development');
+
   /**
    * 1️⃣ 写入 android/gradle.properties
    */
@@ -65,6 +79,29 @@ const withJPush: ConfigPlugin<JPushConfig> = (config, { appKey, channel }) => {
     });
 
     config.modResults.contents = contents;
+    return config;
+  });
+
+  /**
+   * 3️⃣ 写入 iOS Info.plist，供 Native SDK 初始化读取
+   */
+  config = withInfoPlist(config, config => {
+    config.modResults[IOS_INFO_PLIST_APP_KEY] = appKey;
+    config.modResults[IOS_INFO_PLIST_CHANNEL] = channel;
+    config.modResults[IOS_INFO_PLIST_APS_FOR_PRODUCTION] = apsForProduction;
+
+    const backgroundModes = new Set(config.modResults.UIBackgroundModes ?? []);
+    backgroundModes.add('remote-notification');
+    config.modResults.UIBackgroundModes = Array.from(backgroundModes);
+
+    return config;
+  });
+
+  /**
+   * 4️⃣ 写入 iOS push entitlement
+   */
+  config = withEntitlementsPlist(config, config => {
+    config.modResults['aps-environment'] = apsEnvironment;
     return config;
   });
 

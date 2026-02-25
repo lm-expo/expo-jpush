@@ -55,3 +55,6 @@ yarn-error.log
 
 # Expo
 .expo/*
+
+ios copy
+ios-swift

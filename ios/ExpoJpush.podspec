@@ -19,6 +19,7 @@ Pod::Spec.new do |s|
   s.static_framework = true
 
   s.dependency 'ExpoModulesCore'
+  s.dependency 'JPush', '5.9.0'
 
   # Swift/Objective-C compatibility
   s.pod_target_xcconfig = {
@@ -26,4 +27,5 @@ Pod::Spec.new do |s|
   }
 
   s.source_files = "**/*.{h,m,mm,swift,hpp,cpp}"
+  s.public_header_files = "**/ExpoJpushNativeBridge.h"
 end
