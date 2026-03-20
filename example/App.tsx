@@ -1,22 +1,25 @@
-import { useEvent } from 'expo';
-import ExpoJpush from 'expo-jpush';
-import { useEffect, useState } from 'react';
-import { Button, SafeAreaView, ScrollView, Text, View } from 'react-native';
+import { useEvent } from "expo";
+import ExpoJpush from "expo-jpush";
+import { useEffect, useState } from "react";
+import { Button, SafeAreaView, ScrollView, Text, View } from "react-native";
 
 export default function App() {
-  const [registrationID, setRegistrationID] = useState('');
+  const [registrationID, setRegistrationID] = useState("");
 
-const registrationEvent = useEvent(ExpoJpush, 'registration');
-const messageReceivedEvent = useEvent(ExpoJpush, 'messageReceived');
-const notificationReceivedEvent = useEvent(ExpoJpush, 'notificationReceived');
-const notificationOpenedEvent = useEvent(ExpoJpush, 'notificationOpened');
-const connectionChangeEvent = useEvent(ExpoJpush, 'connectionChange');
+  const registrationEvent = useEvent(ExpoJpush, "registration");
+  const messageReceivedEvent = useEvent(ExpoJpush, "messageReceived");
+  const notificationReceivedEvent = useEvent(ExpoJpush, "notificationReceived");
+  const notificationOpenedEvent = useEvent(ExpoJpush, "notificationOpened");
+  const connectionChangeEvent = useEvent(ExpoJpush, "connectionChange");
 
-console.log('========== registrationEvent', registrationEvent);
-console.log('========== messageReceivedEvent', messageReceivedEvent);
-console.log('========== notificationReceivedEvent', notificationReceivedEvent);
-console.log('========== notificationOpenedEvent', notificationOpenedEvent);
-console.log('========== connectionChangeEvent', connectionChangeEvent);
+  console.log("========== registrationEvent", registrationEvent);
+  console.log("========== messageReceivedEvent", messageReceivedEvent);
+  console.log(
+    "========== notificationReceivedEvent",
+    notificationReceivedEvent,
+  );
+  console.log("========== notificationOpenedEvent", notificationOpenedEvent);
+  console.log("========== connectionChangeEvent", connectionChangeEvent);
 
   useEffect(() => {
     ExpoJpush.init({ debug: true }).then(setRegistrationID);
@@ -34,7 +37,7 @@ console.log('========== connectionChangeEvent', connectionChangeEvent);
             title="get registrationID"
             onPress={async () => {
               const registrationID = await ExpoJpush.getRegistrationID();
-              console.log('registrationID', registrationID);
+              console.log("registrationID", registrationID);
               setRegistrationID(registrationID);
             }}
           />
@@ -64,13 +67,13 @@ const styles = {
   },
   group: {
     margin: 20,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 10,
     padding: 20,
   },
   container: {
     flex: 1,
-    backgroundColor: '#eee',
+    backgroundColor: "#eee",
   },
   view: {
     flex: 1,
