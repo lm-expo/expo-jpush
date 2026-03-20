@@ -19,7 +19,11 @@ Pod::Spec.new do |s|
   s.static_framework = true
 
   s.dependency 'ExpoModulesCore'
-  s.dependency 'JPush', '5.9.0'
+
+  # 直接使用 libs 下的 JCore/JPush xcframework，接入方无需在 Podfile 里再写 pod 'JCore' / pod 'JPush'
+  s.vendored_frameworks = 'libs/jcore-ios-5.2.2.xcframework', 'libs/jpush-ios-5.9.0.xcframework'
+  s.preserve_paths   = 'libs/jcore-ios-5.2.2.xcframework', 'libs/jpush-ios-5.9.0.xcframework'
+  s.libraries        = 'resolv'
 
   # Swift/Objective-C compatibility
   s.pod_target_xcconfig = {

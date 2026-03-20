@@ -9,7 +9,7 @@ public class ExpoJpushAppDelegateSubscriber: ExpoAppDelegateSubscriber {
   private let logPrefix = "[expo-jpush][ios][appDelegate]"
 
   public func application(
-    _ application: UIApplication,
+    _: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
     Self.launchOptions = launchOptions
@@ -18,7 +18,7 @@ public class ExpoJpushAppDelegateSubscriber: ExpoAppDelegateSubscriber {
   }
 
   public func application(
-    _ application: UIApplication,
+    _: UIApplication,
     didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
   ) {
     print("\(logPrefix) didRegisterForRemoteNotifications tokenLength=\(deviceToken.count)")
@@ -34,14 +34,14 @@ public class ExpoJpushAppDelegateSubscriber: ExpoAppDelegateSubscriber {
   }
 
   public func application(
-    _ application: UIApplication,
+    _: UIApplication,
     didFailToRegisterForRemoteNotificationsWithError error: Error
   ) {
     print("\(logPrefix) didFailToRegisterForRemoteNotifications error=\(error.localizedDescription)")
   }
 
   public func application(
-    _ application: UIApplication,
+    _: UIApplication,
     didReceiveRemoteNotification userInfo: [AnyHashable: Any],
     fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
   ) {
@@ -54,7 +54,7 @@ public class ExpoJpushAppDelegateSubscriber: ExpoAppDelegateSubscriber {
 
   @objc(jpushNotificationCenter:willPresentNotification:withCompletionHandler:)
   public func jpushNotificationCenter(
-    _ center: UNUserNotificationCenter,
+    _: UNUserNotificationCenter,
     willPresentNotification notification: UNNotification,
     withCompletionHandler completionHandler: @escaping (Int) -> Void
   ) {
@@ -67,7 +67,7 @@ public class ExpoJpushAppDelegateSubscriber: ExpoAppDelegateSubscriber {
 
   @objc(jpushNotificationCenter:didReceiveNotificationResponse:withCompletionHandler:)
   public func jpushNotificationCenter(
-    _ center: UNUserNotificationCenter,
+    _: UNUserNotificationCenter,
     didReceiveNotificationResponse response: UNNotificationResponse,
     withCompletionHandler completionHandler: @escaping () -> Void
   ) {
