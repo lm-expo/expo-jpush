@@ -32,7 +32,7 @@ export default function App() {
   };
 
   // ---- 事件监听 ----
-  const registrationEvent = useEvent(ExpoJpush, "registration");
+  const registrationEvent = (ExpoJpush, "registration");
   const messageReceivedEvent = useEvent(ExpoJpush, "messageReceived");
   const notificationReceivedEvent = useEvent(ExpoJpush, "notificationReceived");
   const notificationOpenedEvent = useEvent(ExpoJpush, "notificationOpened");
