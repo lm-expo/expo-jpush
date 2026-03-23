@@ -42,8 +42,10 @@ export default function App() {
   const mobileNumberEvent = useEvent(ExpoJpush, "mobileNumberResult");
 
   useEffect(() => {
-    if (registrationEvent)
+    if (registrationEvent) {
+      console.log("===registrationEvent", registrationEvent);
       addLog(`registration: ${JSON.stringify(registrationEvent)}`);
+    }
   }, [registrationEvent]);
 
   useEffect(() => {

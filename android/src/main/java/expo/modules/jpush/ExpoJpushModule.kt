@@ -29,7 +29,11 @@ class ExpoJpushModule : Module() {
       JPushInterface.init(context)
       Log.d(TAG, "init called (debug=$debug)")
       flushPendingEvents()
-      JPushInterface.getRegistrationID(context) ?: ""
+      val registrationId = JPushInterface.getRegistrationID(context) ?: ""
+      if (registrationId.isNotEmpty()) {
+        emitOrQueue(ExpoJpushEvents.REGISTRATION, mapOf("registrationId" to registrationId))
+      }
+      registrationId
     }
 
     AsyncFunction("getRegistrationID") { ->
@@ -119,19 +123,11 @@ class ExpoJpushModule : Module() {
     }
 
     // ---- 应用内消息页面追踪 ----
-    AsyncFunction("pageEnterTo") { params: Map<String, Any?> ->
-      val context = appContext.reactContext
-      requireNotNull(context) { "React application context is not available yet." }
-      val pageName = params["pageName"] as? String ?: return@AsyncFunction
-      JPushInterface.pageEnterTo(context, pageName)
-    }
+    // Android SDK 没有 pageEnterTo/pageLeave，这是 iOS 独有 API。
+    // Android 应用内消息通过 JPushMessageReceiver 的 onInAppMessageShow/Click 自动触发。
+    AsyncFunction("pageEnterTo") { _: Map<String, Any?> -> }
 
-    AsyncFunction("pageLeave") { params: Map<String, Any?> ->
-      val context = appContext.reactContext
-      requireNotNull(context) { "React application context is not available yet." }
-      val pageName = params["pageName"] as? String ?: return@AsyncFunction
-      JPushInterface.pageLeave(context, pageName)
-    }
+    AsyncFunction("pageLeave") { _: Map<String, Any?> -> }
 
     // ---- 本地通知 ----
     AsyncFunction("addLocalNotification") { params: Map<String, Any?> ->
@@ -156,7 +152,7 @@ class ExpoJpushModule : Module() {
       if (!builderName.isNullOrEmpty()) {
         val builderId = context.resources.getIdentifier(builderName, "layout", context.packageName)
         if (builderId != 0) {
-          notification.builderId = builderId
+          notification.builderId = builderId.toLong()
         }
       }
 

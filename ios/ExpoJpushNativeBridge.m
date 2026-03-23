@@ -113,7 +113,7 @@ apsForProduction:(BOOL)apsForProduction
   } seq:seq];
 }
 
-+ (void)getAllTagsWithSeq:(NSInteger)seq completion:(ExpoJpushTagsCallback)completion
++ (void)queryAllTagsWithSeq:(NSInteger)seq completion:(ExpoJpushTagsCallback)completion
 {
   [JPUSHService getAllTags:^(NSInteger iResCode, NSSet *iTags, NSInteger iSeq) {
     if (completion) completion(iResCode, iTags.allObjects, iSeq);
@@ -136,7 +136,7 @@ apsForProduction:(BOOL)apsForProduction
   } seq:seq];
 }
 
-+ (void)getAliasWithSeq:(NSInteger)seq completion:(ExpoJpushAliasCallback)completion
++ (void)queryAliasWithSeq:(NSInteger)seq completion:(ExpoJpushAliasCallback)completion
 {
   [JPUSHService getAlias:^(NSInteger iResCode, NSString *iAlias, NSInteger iSeq) {
     if (completion) completion(iResCode, iAlias, iSeq);

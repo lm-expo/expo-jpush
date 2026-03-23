@@ -139,7 +139,7 @@ final class ExpoJpushBridge: NSObject {
   }
 
   func getAllTags(seq: Int) {
-    ExpoJpushNativeBridge.getAllTags(withSeq: seq) { [weak self] code, resultTags, resultSeq in
+    ExpoJpushNativeBridge.queryAllTags(withSeq: seq) { [weak self] code, resultTags, resultSeq in
       self?.emitTagResult(code: code, tags: resultTags, seq: resultSeq)
     }
   }
@@ -167,7 +167,7 @@ final class ExpoJpushBridge: NSObject {
   }
 
   func getAlias(seq: Int) {
-    ExpoJpushNativeBridge.getAlias(withSeq: seq) { [weak self] code, resultAlias, resultSeq in
+    ExpoJpushNativeBridge.queryAlias(withSeq: seq) { [weak self] code, resultAlias, resultSeq in
       self?.emitAliasResult(code: code, alias: resultAlias, seq: resultSeq)
     }
   }
@@ -192,7 +192,7 @@ final class ExpoJpushBridge: NSObject {
   // MARK: - Page Tracking
 
   func pageEnterTo(_ pageName: String) {
-    ExpoJpushNativeBridge.pageEnterTo(pageName)
+    ExpoJpushNativeBridge.pageEnter(to: pageName)
   }
 
   func pageLeave(_ pageName: String) {

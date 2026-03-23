@@ -31,12 +31,12 @@ apsForProduction:(BOOL)apsForProduction;
 + (void)addTags:(NSArray<NSString *> *)tags seq:(NSInteger)seq completion:(ExpoJpushTagsCallback)completion;
 + (void)deleteTags:(NSArray<NSString *> *)tags seq:(NSInteger)seq completion:(ExpoJpushTagsCallback)completion;
 + (void)cleanTagsWithSeq:(NSInteger)seq completion:(ExpoJpushTagsCallback)completion;
-+ (void)getAllTagsWithSeq:(NSInteger)seq completion:(ExpoJpushTagsCallback)completion;
++ (void)queryAllTagsWithSeq:(NSInteger)seq completion:(ExpoJpushTagsCallback)completion;
 
 // ---- Alias 操作 ----
 + (void)setAlias:(NSString *)alias seq:(NSInteger)seq completion:(ExpoJpushAliasCallback)completion;
 + (void)deleteAliasWithSeq:(NSInteger)seq completion:(ExpoJpushAliasCallback)completion;
-+ (void)getAliasWithSeq:(NSInteger)seq completion:(ExpoJpushAliasCallback)completion;
++ (void)queryAliasWithSeq:(NSInteger)seq completion:(ExpoJpushAliasCallback)completion;
 
 // ---- 手机号码 ----
 + (void)setMobileNumber:(NSString *)mobileNumber completion:(void (^)(NSError *_Nullable error))completion;

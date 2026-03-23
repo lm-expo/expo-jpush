@@ -85,7 +85,11 @@ public class ExpoJpushAppDelegateSubscriber: ExpoAppDelegateSubscriber {
     // 转发给 JPush，然后发 Expo 事件给 JS。
     ExpoJpushNativeBridge.handleRemoteNotification(payload)
     ExpoJpushBridge.shared.handleNotification(payload, opened: false)
-    completionHandler(Int(UNNotificationPresentationOptions.badge.rawValue | UNNotificationPresentationOptions.sound.rawValue | UNNotificationPresentationOptions.alert.rawValue))
+    if #available(iOS 14.0, *) {
+      completionHandler(Int(UNNotificationPresentationOptions.badge.rawValue | UNNotificationPresentationOptions.sound.rawValue | UNNotificationPresentationOptions.banner.rawValue | UNNotificationPresentationOptions.list.rawValue))
+    } else {
+      completionHandler(Int(UNNotificationPresentationOptions.badge.rawValue | UNNotificationPresentationOptions.sound.rawValue | UNNotificationPresentationOptions.alert.rawValue))
+    }
   }
 
   // JPush 的通知响应回调（用户点击通知等）。
