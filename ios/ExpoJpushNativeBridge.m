@@ -1,14 +1,15 @@
 #import "ExpoJpushNativeBridge.h"
 #import "JPUSHService.h"
+#import <UserNotifications/UserNotifications.h>
 
 @implementation ExpoJpushNativeBridge
 
-static NSString * const kExpoJpushNativeLogPrefix = @"[expo-jpush][ios][native]";
+static NSString * const kLog = @"[expo-jpush][ios][native]";
 
-// 设置 JPush SDK 的 debug 输出开关
+// ---- 基础 ----
+
 + (void)setDebugMode:(BOOL)enabled
 {
-  NSLog(@"%@ setDebugMode enabled=%@", kExpoJpushNativeLogPrefix, enabled ? @"YES" : @"NO");
   if (enabled) {
     [JPUSHService setDebugMode];
   } else {
@@ -16,92 +17,205 @@ static NSString * const kExpoJpushNativeLogPrefix = @"[expo-jpush][ios][native]"
   }
 }
 
-// 初始化 JPush（必须在 App 启动阶段完成）
-// 参数：
-// - launchOptions：App 启动时的 launchOptions（可能为 nil）
-// - appKey：JPush 的应用 Key
-// - channel：渠道标识
-// - apsForProduction：true=production APNs；false=development APNs
 + (void)setup:(NSDictionary *)launchOptions
        appKey:(NSString *)appKey
       channel:(NSString *)channel
 apsForProduction:(BOOL)apsForProduction
 {
-  NSLog(@"%@ setup appKeyPrefix=%@ channel=%@ apsForProduction=%@ launchOptions=%@",
-        kExpoJpushNativeLogPrefix,
+  NSLog(@"%@ setup appKey=%@… channel=%@ prod=%@", kLog,
         appKey.length >= 6 ? [appKey substringToIndex:6] : appKey,
-        channel,
-        apsForProduction ? @"YES" : @"NO",
-        launchOptions);
+        channel, apsForProduction ? @"YES" : @"NO");
   [JPUSHService setupWithOption:launchOptions
                          appKey:appKey
                         channel:channel
                apsForProduction:apsForProduction];
 }
 
-// 注册远程通知，并把 delegate 交给 JPush 回调
-// 参数：
-// - delegate：实现了 JPUSHRegisterDelegate 所需回调的方法对象
 + (void)registerForRemoteNotificationWithDelegate:(id)delegate
 {
-  NSLog(@"%@ registerForRemoteNotificationWithDelegate delegate=%@",
-        kExpoJpushNativeLogPrefix,
-        NSStringFromClass([delegate class]));
   JPUSHRegisterEntity *entity = [[JPUSHRegisterEntity alloc] init];
   entity.types = JPAuthorizationOptionAlert | JPAuthorizationOptionBadge | JPAuthorizationOptionSound;
   [JPUSHService registerForRemoteNotificationConfig:entity delegate:delegate];
 }
 
-// 把 APNs deviceToken 交给 JPush，以便生成 registrationId
 + (void)registerDeviceToken:(NSData *)deviceToken
 {
-  NSLog(@"%@ registerDeviceToken length=%lu", kExpoJpushNativeLogPrefix, (unsigned long)deviceToken.length);
   [JPUSHService registerDeviceToken:deviceToken];
 }
 
-// 把收到的 remote notification payload 交给 JPush 处理
 + (void)handleRemoteNotification:(NSDictionary *)userInfo
 {
-  NSLog(@"%@ handleRemoteNotification userInfo=%@", kExpoJpushNativeLogPrefix, userInfo);
   [JPUSHService handleRemoteNotification:userInfo];
 }
 
-// 获取 JPush 返回的 registrationId（设备标识）
 + (NSString *)registrationID
 {
-  NSString *registrationID = [JPUSHService registrationID];
-  NSLog(@"%@ registrationID=%@", kExpoJpushNativeLogPrefix, registrationID ?: @"");
-  return registrationID ?: @"";
+  return [JPUSHService registrationID] ?: @"";
 }
 
-// 设置角标数量（badge）
 + (void)setBadge:(NSInteger)badge
 {
   [JPUSHService setBadge:badge];
 }
 
-// JPush 内部通过 NotificationCenter 通知“收到自定义消息”的通知名
+// ---- NotificationCenter 通知名 ----
+
 + (NSString *)networkDidReceiveMessageNotificationName
 {
   return kJPFNetworkDidReceiveMessageNotification;
 }
 
-// JPush 内部通过 NotificationCenter 通知“登录成功”的通知名
 + (NSString *)networkDidLoginNotificationName
 {
   return kJPFNetworkDidLoginNotification;
 }
 
-// JPush 内部通过 NotificationCenter 通知“关闭/断开”的通知名
 + (NSString *)networkDidCloseNotificationName
 {
   return kJPFNetworkDidCloseNotification;
 }
 
-// JPush 内部通过 NotificationCenter 通知“注册失败”的通知名
 + (NSString *)networkFailedRegisterNotificationName
 {
   return kJPFNetworkFailedRegisterNotification;
+}
+
+// ---- Tag 操作 ----
+
++ (void)setTags:(NSArray<NSString *> *)tags seq:(NSInteger)seq completion:(ExpoJpushTagsCallback)completion
+{
+  NSSet *tagSet = [NSSet setWithArray:tags];
+  [JPUSHService setTags:tagSet completion:^(NSInteger iResCode, NSSet *iTags, NSInteger iSeq) {
+    if (completion) completion(iResCode, iTags.allObjects, iSeq);
+  } seq:seq];
+}
+
++ (void)addTags:(NSArray<NSString *> *)tags seq:(NSInteger)seq completion:(ExpoJpushTagsCallback)completion
+{
+  NSSet *tagSet = [NSSet setWithArray:tags];
+  [JPUSHService addTags:tagSet completion:^(NSInteger iResCode, NSSet *iTags, NSInteger iSeq) {
+    if (completion) completion(iResCode, iTags.allObjects, iSeq);
+  } seq:seq];
+}
+
++ (void)deleteTags:(NSArray<NSString *> *)tags seq:(NSInteger)seq completion:(ExpoJpushTagsCallback)completion
+{
+  NSSet *tagSet = [NSSet setWithArray:tags];
+  [JPUSHService deleteTags:tagSet completion:^(NSInteger iResCode, NSSet *iTags, NSInteger iSeq) {
+    if (completion) completion(iResCode, iTags.allObjects, iSeq);
+  } seq:seq];
+}
+
++ (void)cleanTagsWithSeq:(NSInteger)seq completion:(ExpoJpushTagsCallback)completion
+{
+  [JPUSHService cleanTags:^(NSInteger iResCode, NSSet *iTags, NSInteger iSeq) {
+    if (completion) completion(iResCode, iTags.allObjects, iSeq);
+  } seq:seq];
+}
+
++ (void)getAllTagsWithSeq:(NSInteger)seq completion:(ExpoJpushTagsCallback)completion
+{
+  [JPUSHService getAllTags:^(NSInteger iResCode, NSSet *iTags, NSInteger iSeq) {
+    if (completion) completion(iResCode, iTags.allObjects, iSeq);
+  } seq:seq];
+}
+
+// ---- Alias 操作 ----
+
++ (void)setAlias:(NSString *)alias seq:(NSInteger)seq completion:(ExpoJpushAliasCallback)completion
+{
+  [JPUSHService setAlias:alias completion:^(NSInteger iResCode, NSString *iAlias, NSInteger iSeq) {
+    if (completion) completion(iResCode, iAlias, iSeq);
+  } seq:seq];
+}
+
++ (void)deleteAliasWithSeq:(NSInteger)seq completion:(ExpoJpushAliasCallback)completion
+{
+  [JPUSHService deleteAlias:^(NSInteger iResCode, NSString *iAlias, NSInteger iSeq) {
+    if (completion) completion(iResCode, iAlias, iSeq);
+  } seq:seq];
+}
+
++ (void)getAliasWithSeq:(NSInteger)seq completion:(ExpoJpushAliasCallback)completion
+{
+  [JPUSHService getAlias:^(NSInteger iResCode, NSString *iAlias, NSInteger iSeq) {
+    if (completion) completion(iResCode, iAlias, iSeq);
+  } seq:seq];
+}
+
+// ---- 手机号码 ----
+
++ (void)setMobileNumber:(NSString *)mobileNumber completion:(void (^)(NSError *_Nullable error))completion
+{
+  [JPUSHService setMobileNumber:mobileNumber completion:completion];
+}
+
+// ---- 应用内消息页面追踪 ----
+
++ (void)pageEnterTo:(NSString *)pageName
+{
+  [JPUSHService pageEnterTo:pageName];
+}
+
++ (void)pageLeave:(NSString *)pageName
+{
+  [JPUSHService pageLeave:pageName];
+}
+
+// ---- 应用内消息 delegate ----
+
++ (void)setInAppMessageDelegate:(id)delegate
+{
+  [JPUSHService setInAppMessageDelegate:delegate];
+}
+
+// ---- 本地通知 ----
+
++ (void)addLocalNotificationWithId:(NSString *)identifier
+                             title:(NSString *)title
+                           content:(NSString *)content
+                          fireTime:(NSTimeInterval)fireTime
+                            extras:(NSDictionary *)extras
+                          category:(NSString *)category
+{
+  JPushNotificationContent *notifContent = [[JPushNotificationContent alloc] init];
+  notifContent.title = title;
+  notifContent.body = content;
+  notifContent.sound = @"default";
+  if (extras) {
+    notifContent.userInfo = extras;
+  }
+  if (category.length > 0) {
+    notifContent.categoryIdentifier = category;
+  }
+
+  JPushNotificationTrigger *trigger = [[JPushNotificationTrigger alloc] init];
+  if (fireTime > 0) {
+    trigger.timeInterval = fireTime / 1000.0;
+  }
+
+  JPushNotificationRequest *request = [[JPushNotificationRequest alloc] init];
+  request.requestIdentifier = identifier;
+  request.content = notifContent;
+  request.trigger = trigger;
+
+  [JPUSHService addNotification:request];
+}
+
++ (void)removeLocalNotification:(NSString *)identifier
+{
+  JPushNotificationIdentifier *notifId = [[JPushNotificationIdentifier alloc] init];
+  notifId.identifiers = @[identifier];
+  notifId.delivered = NO;
+  [JPUSHService removeNotification:notifId];
+}
+
++ (void)clearLocalNotifications
+{
+  JPushNotificationIdentifier *notifId = [[JPushNotificationIdentifier alloc] init];
+  notifId.identifiers = nil;
+  notifId.delivered = NO;
+  [JPUSHService removeNotification:notifId];
 }
 
 @end

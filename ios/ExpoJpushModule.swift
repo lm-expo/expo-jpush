@@ -3,39 +3,24 @@ import ExpoModulesCore
 public class ExpoJpushModule: Module {
   private let logPrefix = "[expo-jpush][ios][module]"
 
-  // Expo Module 的注册入口：声明模块名、事件、以及 JS 可调用的方法。
   public func definition() -> ModuleDefinition {
     Name("ExpoJpush")
 
-    // JS 侧可以监听这些事件名（由 ExpoJpushBridge / AppDelegate / JPush 回调触发）
-    Events(
-      ExpoJpushEvent.registration,
-      ExpoJpushEvent.messageReceived,
-      ExpoJpushEvent.notificationReceived,
-      ExpoJpushEvent.notificationOpened,
-      ExpoJpushEvent.connectionChange
-    )
+    Events(ExpoJpushEvent.all)
 
-    // Module 创建时：把当前 module 实例 attach 给 Bridge，
-    // 以便 Bridge 可以向 JS 发事件（包括处理 init 早于 Module 创建时的 pending events）。
     OnCreate {
       ExpoJpushBridge.shared.attach(module: self)
     }
 
-    // Module 销毁时：detach 清理对 module 的引用，避免潜在的无效回调。
     OnDestroy {
       ExpoJpushBridge.shared.detach(module: self)
     }
 
-    // JS 调用：初始化 JPush（读 Info.plist 配置、注册回调并获取 registrationId）。
-    // parameters:
-    // - options: { debug?: boolean, ... }
-    // returns: registrationId 字符串（可能为空）
+    // ---- 基础 ----
+
     AsyncFunction("init") { (options: [String: Any]?) -> String in
-      print("\(self.logPrefix) init called with options=\(String(describing: options))")
       ExpoJpushBridge.shared.setupIfNeeded(options: options)
       let registrationId = ExpoJpushBridge.shared.registrationID()
-      print("\(self.logPrefix) init result registrationId=\(registrationId)")
       if !registrationId.isEmpty {
         ExpoJpushBridge.shared.emit(
           name: ExpoJpushEvent.registration,
@@ -45,19 +30,104 @@ public class ExpoJpushModule: Module {
       return registrationId
     }
 
-    // JS 调用：获取当前 registrationId（由原生层从 JPush 读取）。
     AsyncFunction("getRegistrationID") { () -> String in
-      let registrationId = ExpoJpushBridge.shared.registrationID()
-      print("\(self.logPrefix) getRegistrationID result=\(registrationId)")
-      return registrationId
+      return ExpoJpushBridge.shared.registrationID()
     }
 
-    // JS 调用：设置角标数字。
-    // parameters:
-    // - params.badge: NSNumber/int（未传则默认 0）
     AsyncFunction("setBadgeNumber") { (params: [String: Any]?) in
       let badgeValue = (params?["badge"] as? NSNumber)?.intValue ?? 0
       ExpoJpushNativeBridge.setBadge(Int(badgeValue))
+    }
+
+    // ---- Tag 操作 ----
+
+    AsyncFunction("setTags") { (params: [String: Any]) in
+      guard let tags = params["tags"] as? [String] else { return }
+      let seq = (params["seq"] as? NSNumber)?.intValue ?? 0
+      ExpoJpushBridge.shared.setTags(tags, seq: seq)
+    }
+
+    AsyncFunction("addTags") { (params: [String: Any]) in
+      guard let tags = params["tags"] as? [String] else { return }
+      let seq = (params["seq"] as? NSNumber)?.intValue ?? 0
+      ExpoJpushBridge.shared.addTags(tags, seq: seq)
+    }
+
+    AsyncFunction("deleteTags") { (params: [String: Any]) in
+      guard let tags = params["tags"] as? [String] else { return }
+      let seq = (params["seq"] as? NSNumber)?.intValue ?? 0
+      ExpoJpushBridge.shared.deleteTags(tags, seq: seq)
+    }
+
+    AsyncFunction("cleanTags") { (params: [String: Any]) in
+      let seq = (params["seq"] as? NSNumber)?.intValue ?? 0
+      ExpoJpushBridge.shared.cleanTags(seq: seq)
+    }
+
+    AsyncFunction("getAllTags") { (params: [String: Any]) in
+      let seq = (params["seq"] as? NSNumber)?.intValue ?? 0
+      ExpoJpushBridge.shared.getAllTags(seq: seq)
+    }
+
+    // ---- Alias 操作 ----
+
+    AsyncFunction("setAlias") { (params: [String: Any]) in
+      guard let alias = params["alias"] as? String else { return }
+      let seq = (params["seq"] as? NSNumber)?.intValue ?? 0
+      ExpoJpushBridge.shared.setAlias(alias, seq: seq)
+    }
+
+    AsyncFunction("deleteAlias") { (params: [String: Any]) in
+      let seq = (params["seq"] as? NSNumber)?.intValue ?? 0
+      ExpoJpushBridge.shared.deleteAlias(seq: seq)
+    }
+
+    AsyncFunction("getAlias") { (params: [String: Any]) in
+      let seq = (params["seq"] as? NSNumber)?.intValue ?? 0
+      ExpoJpushBridge.shared.getAlias(seq: seq)
+    }
+
+    // ---- 手机号码 ----
+
+    AsyncFunction("setMobileNumber") { (params: [String: Any]) in
+      guard let mobileNumber = params["mobileNumber"] as? String else { return }
+      ExpoJpushBridge.shared.setMobileNumber(mobileNumber)
+    }
+
+    // ---- 应用内消息页面追踪 ----
+
+    AsyncFunction("pageEnterTo") { (params: [String: Any]) in
+      guard let pageName = params["pageName"] as? String else { return }
+      ExpoJpushBridge.shared.pageEnterTo(pageName)
+    }
+
+    AsyncFunction("pageLeave") { (params: [String: Any]) in
+      guard let pageName = params["pageName"] as? String else { return }
+      ExpoJpushBridge.shared.pageLeave(pageName)
+    }
+
+    // ---- 本地通知 ----
+
+    AsyncFunction("addLocalNotification") { (params: [String: Any]) in
+      let notifId = (params["id"] as? NSNumber)?.stringValue ?? "0"
+      let title = (params["title"] as? String) ?? ""
+      let content = (params["content"] as? String) ?? ""
+      let fireTime = (params["fireTime"] as? NSNumber)?.doubleValue ?? 0
+      let extras = params["extras"] as? [String: Any]
+      let category = params["category"] as? String
+      ExpoJpushBridge.shared.addLocalNotification(
+        id: notifId, title: title, content: content,
+        fireTime: fireTime, extras: extras, category: category
+      )
+    }
+
+    AsyncFunction("removeLocalNotification") { (params: [String: Any]) in
+      guard let notifId = params["id"] as? String else { return }
+      ExpoJpushBridge.shared.removeLocalNotification(id: notifId)
+    }
+
+    AsyncFunction("clearLocalNotifications") { () in
+      ExpoJpushBridge.shared.clearLocalNotifications()
     }
   }
 }

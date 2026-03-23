@@ -1,14 +1,10 @@
-export type OnLoadEventPayload = {
-  url: string;
-};
-
-
 export type JPushRegistrationPayload = {
   registrationId: string;
 };
 
 export type JPushMessagePayload = {
   message: string;
+  title?: string | null;
   extras?: Record<string, unknown> | null;
 };
 
@@ -18,9 +14,37 @@ export type JPushNotificationPayload = {
   extras?: Record<string, unknown> | null;
 };
 
-
 export type JPushConnectionChangePayload = {
   connected: boolean;
+};
+
+export type JPushLocalNotificationPayload = {
+  title?: string | null;
+  content?: string | null;
+  extras?: Record<string, unknown> | null;
+};
+
+export type JPushInAppMessagePayload = {
+  eventType: "show" | "click";
+  messageId?: string | null;
+  title?: string | null;
+  content?: string | null;
+  target?: string[] | null;
+  clickAction?: string | null;
+  extras?: Record<string, unknown> | null;
+};
+
+export type JPushTagAliasResultPayload = {
+  code: number;
+  sequence: number;
+  tags?: string[] | null;
+  alias?: string | null;
+  isBind?: boolean | null;
+};
+
+export type JPushMobileNumberResultPayload = {
+  code: number;
+  sequence?: number | null;
 };
 
 export type ExpoJpushModuleEvents = {
@@ -29,13 +53,8 @@ export type ExpoJpushModuleEvents = {
   notificationReceived: (payload: JPushNotificationPayload) => void;
   notificationOpened: (payload: JPushNotificationPayload) => void;
   connectionChange: (payload: JPushConnectionChangePayload) => void;
-};
-
-export type RegistrationEventPayload = {
-  registrationId: string;
-};
-
-export type MessageReceivedEventPayload = {
-  message: string;
-  extras: Record<string, any>;
+  localNotificationReceived: (payload: JPushLocalNotificationPayload) => void;
+  inAppMessage: (payload: JPushInAppMessagePayload) => void;
+  tagAliasResult: (payload: JPushTagAliasResultPayload) => void;
+  mobileNumberResult: (payload: JPushMobileNumberResultPayload) => void;
 };

@@ -3,6 +3,7 @@ package expo.modules.jpush
 import android.content.Context
 import android.util.Log
 import cn.jpush.android.api.CustomMessage
+import cn.jpush.android.api.JPushMessage
 import cn.jpush.android.api.NotificationMessage
 import cn.jpush.android.service.JPushMessageReceiver
 import org.json.JSONObject
@@ -35,15 +36,17 @@ class ExpoJPushMessageReceiver : JPushMessageReceiver() {
   }
 
   override fun onNotifyMessageArrived(context: Context, message: NotificationMessage) {
-    Log.d(TAG, "onNotifyMessageArrived: ${message.notificationTitle}")
-    ExpoJpushModule.emitOrQueue(
-      ExpoJpushEvents.NOTIFICATION_RECEIVED,
-      mapOf(
-        "title" to message.notificationTitle,
-        "content" to message.notificationContent,
-        "extras" to parseExtras(message.notificationExtras)
-      )
+    Log.d(TAG, "onNotifyMessageArrived: ${message.notificationTitle} type=${message.notificationType}")
+    val payload = mapOf(
+      "title" to message.notificationTitle,
+      "content" to message.notificationContent,
+      "extras" to parseExtras(message.notificationExtras)
     )
+    if (message.notificationType == 1) {
+      ExpoJpushModule.emitOrQueue(ExpoJpushEvents.LOCAL_NOTIFICATION_RECEIVED, payload)
+    } else {
+      ExpoJpushModule.emitOrQueue(ExpoJpushEvents.NOTIFICATION_RECEIVED, payload)
+    }
   }
 
   override fun onNotifyMessageOpened(context: Context, message: NotificationMessage) {
@@ -65,5 +68,81 @@ class ExpoJPushMessageReceiver : JPushMessageReceiver() {
       mapOf("connected" to isConnected)
     )
   }
-}
 
+  // ---- Tag/Alias 回调 ----
+  override fun onTagOperatorResult(context: Context, jPushMessage: JPushMessage) {
+    Log.d(TAG, "onTagOperatorResult: $jPushMessage")
+    ExpoJpushModule.emitOrQueue(
+      ExpoJpushEvents.TAG_ALIAS_RESULT,
+      mapOf(
+        "code" to jPushMessage.errorCode,
+        "sequence" to jPushMessage.sequence,
+        "tags" to jPushMessage.tags?.toList()
+      )
+    )
+  }
+
+  override fun onCheckTagOperatorResult(context: Context, jPushMessage: JPushMessage) {
+    Log.d(TAG, "onCheckTagOperatorResult: $jPushMessage")
+    ExpoJpushModule.emitOrQueue(
+      ExpoJpushEvents.TAG_ALIAS_RESULT,
+      mapOf(
+        "code" to jPushMessage.errorCode,
+        "sequence" to jPushMessage.sequence,
+        "tags" to jPushMessage.tags?.toList(),
+        "isBind" to jPushMessage.tagCheckStateResult
+      )
+    )
+  }
+
+  override fun onAliasOperatorResult(context: Context, jPushMessage: JPushMessage) {
+    Log.d(TAG, "onAliasOperatorResult: $jPushMessage")
+    ExpoJpushModule.emitOrQueue(
+      ExpoJpushEvents.TAG_ALIAS_RESULT,
+      mapOf(
+        "code" to jPushMessage.errorCode,
+        "sequence" to jPushMessage.sequence,
+        "alias" to jPushMessage.alias
+      )
+    )
+  }
+
+  // ---- 手机号码回调 ----
+  override fun onMobileNumberOperatorResult(context: Context, jPushMessage: JPushMessage) {
+    Log.d(TAG, "onMobileNumberOperatorResult: $jPushMessage")
+    ExpoJpushModule.emitOrQueue(
+      ExpoJpushEvents.MOBILE_NUMBER_RESULT,
+      mapOf(
+        "code" to jPushMessage.errorCode,
+        "sequence" to jPushMessage.sequence
+      )
+    )
+  }
+
+  // ---- 应用内消息回调 ----
+  override fun onInAppMessageShow(context: Context, message: NotificationMessage) {
+    Log.d(TAG, "onInAppMessageShow: ${message.notificationTitle}")
+    ExpoJpushModule.emitOrQueue(
+      ExpoJpushEvents.INAPP_MESSAGE,
+      mapOf(
+        "eventType" to "show",
+        "title" to message.notificationTitle,
+        "content" to message.notificationContent,
+        "extras" to parseExtras(message.notificationExtras)
+      )
+    )
+  }
+
+  override fun onInAppMessageClick(context: Context, message: NotificationMessage) {
+    Log.d(TAG, "onInAppMessageClick: ${message.notificationTitle}")
+    ExpoJpushModule.emitOrQueue(
+      ExpoJpushEvents.INAPP_MESSAGE,
+      mapOf(
+        "eventType" to "click",
+        "title" to message.notificationTitle,
+        "content" to message.notificationContent,
+        "extras" to parseExtras(message.notificationExtras)
+      )
+    )
+  }
+}

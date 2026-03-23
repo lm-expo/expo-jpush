@@ -14,41 +14,28 @@ class ExpoJpushModule : Module() {
     currentModule = WeakReference(this)
   }
 
-  // Each module class must implement the definition function. The definition consists of components
-  // that describes the module's functionality and behavior.
-  // See https://docs.expo.dev/modules/module-api for more details about available components.
   override fun definition() = ModuleDefinition {
-    // Sets the name of the module that JavaScript code will use to refer to the module. Takes a string as an argument.
-    // Can be inferred from module's class name, but it's recommended to set it explicitly for clarity.
-    // The module will be accessible from `requireNativeModule('ExpoJpush')` in JavaScript.
     Name("ExpoJpush")
-    Events(
-      ExpoJpushEvents.REGISTRATION,
-      ExpoJpushEvents.MESSAGE_RECEIVED,
-      ExpoJpushEvents.NOTIFICATION_RECEIVED,
-      ExpoJpushEvents.NOTIFICATION_OPENED,
-      ExpoJpushEvents.CONNECTION_CHANGE
-    )
 
+    Events(*ExpoJpushEvents.ALL)
+
+    // ---- 基础 ----
     AsyncFunction("init") { options: Map<String, Any>? ->
-      var context = appContext.reactContext?.applicationContext
+      val context = appContext.reactContext?.applicationContext
       requireNotNull(context) { "react application context is not available yet." }
 
-      var debug = options?.get("debug") as? Boolean ?: false
+      val debug = options?.get("debug") as? Boolean ?: false
       JPushInterface.setDebugMode(debug)
       JPushInterface.init(context)
       Log.d(TAG, "init called (debug=$debug)")
-      Log.d(TAG, "registrationId after init: ${JPushInterface.getRegistrationID(context) ?: ""}")
       flushPendingEvents()
       JPushInterface.getRegistrationID(context) ?: ""
     }
 
     AsyncFunction("getRegistrationID") { ->
-      var context = appContext.reactContext?.applicationContext
+      val context = appContext.reactContext?.applicationContext
       requireNotNull(context) { "react application context is not available yet." }
-      var registrationID = JPushInterface.getRegistrationID(context) ?: ""
-      Log.d(TAG, "getRegistrationID: $registrationID")
-      return@AsyncFunction registrationID
+      JPushInterface.getRegistrationID(context) ?: ""
     }
 
     AsyncFunction("setBadgeNumber") { params: Map<String, Any?>? ->
@@ -58,6 +45,145 @@ class ExpoJpushModule : Module() {
       if (number != null) {
         JPushInterface.setBadgeNumber(context, number)
       }
+    }
+
+    // ---- Tag 操作 ----
+    AsyncFunction("setTags") { params: Map<String, Any?> ->
+      val context = appContext.reactContext
+      requireNotNull(context) { "React application context is not available yet." }
+      val tags = (params["tags"] as? List<*>)?.filterIsInstance<String>()?.toSet() ?: return@AsyncFunction
+      val seq = (params["seq"] as? Number)?.toInt() ?: 0
+      JPushInterface.setTags(context, seq, tags)
+    }
+
+    AsyncFunction("addTags") { params: Map<String, Any?> ->
+      val context = appContext.reactContext
+      requireNotNull(context) { "React application context is not available yet." }
+      val tags = (params["tags"] as? List<*>)?.filterIsInstance<String>()?.toSet() ?: return@AsyncFunction
+      val seq = (params["seq"] as? Number)?.toInt() ?: 0
+      JPushInterface.addTags(context, seq, tags)
+    }
+
+    AsyncFunction("deleteTags") { params: Map<String, Any?> ->
+      val context = appContext.reactContext
+      requireNotNull(context) { "React application context is not available yet." }
+      val tags = (params["tags"] as? List<*>)?.filterIsInstance<String>()?.toSet() ?: return@AsyncFunction
+      val seq = (params["seq"] as? Number)?.toInt() ?: 0
+      JPushInterface.deleteTags(context, seq, tags)
+    }
+
+    AsyncFunction("cleanTags") { params: Map<String, Any?> ->
+      val context = appContext.reactContext
+      requireNotNull(context) { "React application context is not available yet." }
+      val seq = (params["seq"] as? Number)?.toInt() ?: 0
+      JPushInterface.cleanTags(context, seq)
+    }
+
+    AsyncFunction("getAllTags") { params: Map<String, Any?> ->
+      val context = appContext.reactContext
+      requireNotNull(context) { "React application context is not available yet." }
+      val seq = (params["seq"] as? Number)?.toInt() ?: 0
+      JPushInterface.getAllTags(context, seq)
+    }
+
+    // ---- Alias 操作 ----
+    AsyncFunction("setAlias") { params: Map<String, Any?> ->
+      val context = appContext.reactContext
+      requireNotNull(context) { "React application context is not available yet." }
+      val alias = params["alias"] as? String ?: return@AsyncFunction
+      val seq = (params["seq"] as? Number)?.toInt() ?: 0
+      JPushInterface.setAlias(context, seq, alias)
+    }
+
+    AsyncFunction("deleteAlias") { params: Map<String, Any?> ->
+      val context = appContext.reactContext
+      requireNotNull(context) { "React application context is not available yet." }
+      val seq = (params["seq"] as? Number)?.toInt() ?: 0
+      JPushInterface.deleteAlias(context, seq)
+    }
+
+    AsyncFunction("getAlias") { params: Map<String, Any?> ->
+      val context = appContext.reactContext
+      requireNotNull(context) { "React application context is not available yet." }
+      val seq = (params["seq"] as? Number)?.toInt() ?: 0
+      JPushInterface.getAlias(context, seq)
+    }
+
+    // ---- 手机号码 ----
+    AsyncFunction("setMobileNumber") { params: Map<String, Any?> ->
+      val context = appContext.reactContext
+      requireNotNull(context) { "React application context is not available yet." }
+      val mobileNumber = params["mobileNumber"] as? String ?: return@AsyncFunction
+      val seq = (params["seq"] as? Number)?.toInt() ?: 0
+      JPushInterface.setMobileNumber(context, seq, mobileNumber)
+    }
+
+    // ---- 应用内消息页面追踪 ----
+    AsyncFunction("pageEnterTo") { params: Map<String, Any?> ->
+      val context = appContext.reactContext
+      requireNotNull(context) { "React application context is not available yet." }
+      val pageName = params["pageName"] as? String ?: return@AsyncFunction
+      JPushInterface.pageEnterTo(context, pageName)
+    }
+
+    AsyncFunction("pageLeave") { params: Map<String, Any?> ->
+      val context = appContext.reactContext
+      requireNotNull(context) { "React application context is not available yet." }
+      val pageName = params["pageName"] as? String ?: return@AsyncFunction
+      JPushInterface.pageLeave(context, pageName)
+    }
+
+    // ---- 本地通知 ----
+    AsyncFunction("addLocalNotification") { params: Map<String, Any?> ->
+      val context = appContext.reactContext
+      requireNotNull(context) { "React application context is not available yet." }
+      val id = (params["id"] as? Number)?.toLong() ?: 0L
+      val title = params["title"] as? String ?: context.packageName
+      val content = params["content"] as? String ?: context.packageName
+      val fireTime = (params["fireTime"] as? Number)?.toLong() ?: 0L
+      val extras = params["extras"] as? Map<*, *>
+
+      val notification = cn.jpush.android.data.JPushLocalNotification()
+      notification.notificationId = id
+      notification.title = title
+      notification.content = content
+      notification.broadcastTime = if (fireTime > 0) System.currentTimeMillis() + fireTime else System.currentTimeMillis()
+      if (extras != null) {
+        notification.extras = JSONObject(extras).toString()
+      }
+
+      val builderName = params["builderName"] as? String
+      if (!builderName.isNullOrEmpty()) {
+        val builderId = context.resources.getIdentifier(builderName, "layout", context.packageName)
+        if (builderId != 0) {
+          notification.builderId = builderId
+        }
+      }
+
+      val category = params["category"] as? String
+      if (!category.isNullOrEmpty()) {
+        notification.category = category
+      }
+
+      val priority = (params["priority"] as? Number)?.toInt()
+      if (priority != null) {
+        notification.priority = priority
+      }
+
+      JPushInterface.addLocalNotification(context, notification)
+    }
+
+    AsyncFunction("removeLocalNotification") { params: Map<String, Any?> ->
+      val context = appContext.reactContext
+      requireNotNull(context) { "React application context is not available yet." }
+      val id = (params["id"] as? String)?.toLongOrNull() ?: return@AsyncFunction
+      JPushInterface.removeLocalNotification(context, id)
+    }
+
+    AsyncFunction("clearLocalNotifications") { ->
+      val context = appContext.reactContext
+      requireNotNull(context) { "React application context is not available yet." }
+      JPushInterface.clearLocalNotifications(context)
     }
   }
 
@@ -86,38 +212,26 @@ class ExpoJpushModule : Module() {
   private fun handleIndent(intent: Intent) {
     Log.d(TAG, "handleIndent: ${intent.action}")
     when (intent.action) {
-
       JPushInterface.ACTION_REGISTRATION_ID -> {
         val registrationId = intent.getStringExtra(JPushInterface.EXTRA_REGISTRATION_ID) ?: return
-        Log.d(TAG, "registrationId: $registrationId")
         emitOrQueue(ExpoJpushEvents.REGISTRATION, mapOf("registrationId" to registrationId))
       }
       JPushInterface.ACTION_NOTIFICATION_RECEIVED -> {
-        Log.d(TAG, "ACTION_NOTIFICATION_RECEIVED")
         emitOrQueue(ExpoJpushEvents.NOTIFICATION_RECEIVED, buildNotificationPayload(intent))
       }
-
       JPushInterface.ACTION_MESSAGE_RECEIVED -> {
         val message = intent.getStringExtra(JPushInterface.EXTRA_MESSAGE) ?: return
         val extras = parseExtras(intent.getStringExtra(JPushInterface.EXTRA_EXTRA))
-        Log.d(TAG, "message: $message")
-        Log.d(TAG, "extras: $extras")
         emitOrQueue(
           ExpoJpushEvents.MESSAGE_RECEIVED,
-          mapOf(
-            "message" to message,
-            "extras" to extras
-          )
+          mapOf("message" to message, "extras" to extras)
         )
       }
-
       JPushInterface.ACTION_NOTIFICATION_OPENED -> {
         emitOrQueue(ExpoJpushEvents.NOTIFICATION_OPENED, buildNotificationPayload(intent))
       }
-
       JPushInterface.ACTION_CONNECTION_CHANGE -> {
         val connected = intent.getBooleanExtra(JPushInterface.EXTRA_CONNECTION_CHANGE, false)
-        Log.d(TAG, "connected: $connected")
         emitOrQueue(ExpoJpushEvents.CONNECTION_CHANGE, mapOf("connected" to connected))
       }
     }
@@ -132,7 +246,7 @@ class ExpoJpushModule : Module() {
       sendEvent(name, payload)
     }
   }
-  
+
   private fun flushPendingEvents() {
     synchronized(pendingEvents) {
       pendingEvents.forEach { (name, payload) ->
@@ -143,12 +257,10 @@ class ExpoJpushModule : Module() {
   }
 
   companion object {
-
     private var currentModule: WeakReference<ExpoJpushModule>? = null
     private val pendingEvents = mutableListOf<Pair<String, Map<String, Any?>>>()
 
     internal fun handleBroadcast(intent: Intent) {
-      Log.d(TAG, "handleBroadcast: ${intent.action}")
       currentModule?.get()?.handleIndent(intent)
     }
 
@@ -157,4 +269,3 @@ class ExpoJpushModule : Module() {
     }
   }
 }
- 
