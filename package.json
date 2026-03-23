@@ -1,6 +1,6 @@
 {
   "name": "@lm/expo-jpush",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Linkmore Expo JPush",
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -34,6 +34,7 @@
     "ios",
     "android/build.gradle",
     "android/src",
+    "android/libs",
     "expo-module.config.json",
     "app.plugin.js",
     "plugin/build"
