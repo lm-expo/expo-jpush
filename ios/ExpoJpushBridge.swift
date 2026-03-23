@@ -52,6 +52,13 @@ final class ExpoJpushBridge: NSObject {
 
     guard !isInitialized else { return }
 
+    // JPush registration internally calls UIKit APIs that must run on the main thread.
+    // AsyncFunction dispatches to a background thread, so we redirect synchronously.
+    if !Thread.isMainThread {
+      DispatchQueue.main.sync { self.setupIfNeeded(options: options) }
+      return
+    }
+
     let appKey = (Bundle.main.object(forInfoDictionaryKey: "ExpoJpushAppKey") as? String) ?? ""
     let channel = (Bundle.main.object(forInfoDictionaryKey: "ExpoJpushChannel") as? String) ?? "default"
     let apsForProduction = (Bundle.main.object(forInfoDictionaryKey: "ExpoJpushApsForProduction") as? Bool) ?? false
@@ -68,8 +75,9 @@ final class ExpoJpushBridge: NSObject {
       apsForProduction: apsForProduction
     )
     ExpoJpushNativeBridge.registerForRemoteNotification(withDelegate: ExpoJpushAppDelegateSubscriber.shared)
-    ExpoJpushNativeBridge.setInAppMessageDelegate(self)
+    ExpoJpushNativeBridge.registerInAppMessageDelegate()
 
+    registerInAppMessageObservers()
     registerObserversIfNeeded()
     isInitialized = true
     print("\(logPrefix) setup completed")
@@ -322,37 +330,28 @@ final class ExpoJpushBridge: NSObject {
   }
 }
 
-// MARK: - JPUSHInAppMessageDelegate（通过 @objc 匹配 JPush SDK 的 selector）
+// MARK: - InAppMessage（通过 NSNotificationCenter 接收 OC 层转发的事件）
 
 extension ExpoJpushBridge {
-  @objc func jPushInAppMessageDidShow(_ inAppMessage: NSObject) {
-    emit(name: ExpoJpushEvent.inAppMessage, payload: buildInAppMessagePayload(inAppMessage, eventType: "show"))
+  func registerInAppMessageObservers() {
+    let nc = NotificationCenter.default
+    nc.addObserver(self, selector: #selector(handleInAppMessageShow(_:)),
+                   name: NSNotification.Name("ExpoJpushInAppMessageShow"), object: nil)
+    nc.addObserver(self, selector: #selector(handleInAppMessageClick(_:)),
+                   name: NSNotification.Name("ExpoJpushInAppMessageClick"), object: nil)
   }
 
-  @objc func jPushInAppMessageDidClick(_ inAppMessage: NSObject) {
-    emit(name: ExpoJpushEvent.inAppMessage, payload: buildInAppMessagePayload(inAppMessage, eventType: "click"))
+  @objc private func handleInAppMessageShow(_ notification: Notification) {
+    guard let info = notification.userInfo as? [String: Any] else { return }
+    var payload = info
+    payload["eventType"] = "show"
+    emit(name: ExpoJpushEvent.inAppMessage, payload: payload)
   }
 
-  private func buildInAppMessagePayload(_ message: NSObject, eventType: String) -> [String: Any] {
-    var payload: [String: Any] = ["eventType": eventType]
-    if let msgId = message.value(forKey: "mesageId") as? String {
-      payload["messageId"] = msgId
-    }
-    if let title = message.value(forKey: "title") as? String {
-      payload["title"] = title
-    }
-    if let content = message.value(forKey: "content") as? String {
-      payload["content"] = content
-    }
-    if let target = message.value(forKey: "target") as? [String] {
-      payload["target"] = target
-    }
-    if let clickAction = message.value(forKey: "clickAction") as? String {
-      payload["clickAction"] = clickAction
-    }
-    if let extras = message.value(forKey: "extras") as? [String: Any] {
-      payload["extras"] = extras
-    }
-    return payload
+  @objc private func handleInAppMessageClick(_ notification: Notification) {
+    guard let info = notification.userInfo as? [String: Any] else { return }
+    var payload = info
+    payload["eventType"] = "click"
+    emit(name: ExpoJpushEvent.inAppMessage, payload: payload)
   }
 }

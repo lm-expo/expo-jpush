@@ -46,7 +46,7 @@ apsForProduction:(BOOL)apsForProduction;
 + (void)pageLeave:(NSString *)pageName;
 
 // ---- 应用内消息 delegate ----
-+ (void)setInAppMessageDelegate:(id)delegate;
++ (void)registerInAppMessageDelegate;
 
 // ---- 本地通知 ----
 + (void)addLocalNotificationWithId:(NSString *)identifier

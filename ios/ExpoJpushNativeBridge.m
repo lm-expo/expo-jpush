@@ -3,6 +3,39 @@
 #import <UIKit/UIKit.h>
 #import <UserNotifications/UserNotifications.h>
 
+NSString * const kExpoJpushInAppMessageShow = @"ExpoJpushInAppMessageShow";
+NSString * const kExpoJpushInAppMessageClick = @"ExpoJpushInAppMessageClick";
+
+@interface ExpoJpushInAppMessageHandler : NSObject <JPUSHInAppMessageDelegate>
+@end
+
+@implementation ExpoJpushInAppMessageHandler
+
+- (void)jPushInAppMessageDidShow:(JPushInAppMessage *)inAppMessage {
+  NSDictionary *info = [ExpoJpushInAppMessageHandler inAppMessageToDict:inAppMessage];
+  [[NSNotificationCenter defaultCenter] postNotificationName:kExpoJpushInAppMessageShow object:nil userInfo:info];
+}
+
+- (void)jPushInAppMessageDidClick:(JPushInAppMessage *)inAppMessage {
+  NSDictionary *info = [ExpoJpushInAppMessageHandler inAppMessageToDict:inAppMessage];
+  [[NSNotificationCenter defaultCenter] postNotificationName:kExpoJpushInAppMessageClick object:nil userInfo:info];
+}
+
++ (NSDictionary *)inAppMessageToDict:(JPushInAppMessage *)msg {
+  NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+  if (msg.mesageId) dict[@"messageId"] = msg.mesageId;
+  if (msg.title) dict[@"title"] = msg.title;
+  if (msg.content) dict[@"content"] = msg.content;
+  if (msg.target) dict[@"target"] = msg.target;
+  if (msg.clickAction) dict[@"clickAction"] = msg.clickAction;
+  if (msg.extras) dict[@"extras"] = msg.extras;
+  return dict;
+}
+
+@end
+
+static ExpoJpushInAppMessageHandler *_inAppHandler = nil;
+
 @implementation ExpoJpushNativeBridge
 
 static NSString * const kLog = @"[expo-jpush][ios][native]";
@@ -172,9 +205,12 @@ apsForProduction:(BOOL)apsForProduction
 
 // ---- 应用内消息 delegate ----
 
-+ (void)setInAppMessageDelegate:(id)delegate
++ (void)registerInAppMessageDelegate
 {
-  [JPUSHService setInAppMessageDelegate:delegate];
+  if (!_inAppHandler) {
+    _inAppHandler = [[ExpoJpushInAppMessageHandler alloc] init];
+  }
+  [JPUSHService setInAppMessageDelegate:_inAppHandler];
 }
 
 // ---- 本地通知 ----
