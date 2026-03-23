@@ -1,6 +1,6 @@
 {
   "name": "@lm/expo-jpush",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Linkmore Expo JPush",
   "main": "build/index.js",
   "types": "build/index.d.ts",
