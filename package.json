@@ -1,7 +1,7 @@
 {
-  "name": "expo-jpush",
-  "version": "0.1.0",
-  "description": "My new module",
+  "name": "@lm/expo-jpush",
+  "version": "1.0.0",
+  "description": "Linkmore Expo JPush",
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "scripts": {
@@ -28,6 +28,14 @@
   },
   "author": "fenghe <fenghe@linkmore.com> (https://github.com/enochjs/expo-jpush)",
   "license": "MIT",
+  "files": [
+    "build",
+    "src",
+    "ios",
+    "android",
+    "expo-module.config.json",
+    "plugin/build"
+  ],
   "homepage": "https://github.com/enochjs/expo-jpush/expo-jpush#readme",
   "dependencies": {},
   "devDependencies": {
