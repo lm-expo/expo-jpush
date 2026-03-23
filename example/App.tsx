@@ -22,6 +22,7 @@ export default function App() {
   const [aliasInput, setAliasInput] = useState("testUser");
   const [mobileInput, setMobileInput] = useState("13800138000");
   const [pageInput, setPageInput] = useState("HomePage");
+  const [badgeCount, setBadgeCount] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
 
   const addLog = (msg: string) => {
@@ -118,18 +119,44 @@ export default function App() {
             }}
           />
           <Spacer />
-          <Button
-            title="setBadgeNumber(5)"
-            onPress={async () => {
-              await ExpoJpush.setBadgeNumber({ badge: 5 });
-              addLog("setBadgeNumber(5) done");
-            }}
-          />
+          <Text style={styles.label}>当前角标: {badgeCount}</Text>
+          <View style={styles.badgeRow}>
+            <View style={styles.badgeBtn}>
+              <Button
+                title="-1"
+                onPress={async () => {
+                  const next = Math.max(0, badgeCount - 1);
+                  await ExpoJpush.setBadgeNumber({ badge: next });
+                  setBadgeCount(next);
+                  addLog(`setBadgeNumber(${next})`);
+                }}
+              />
+            </View>
+            <View style={styles.badgeDisplay}>
+              <View style={styles.badgeCircle}>
+                <Text style={styles.badgeText}>
+                  {badgeCount > 99 ? "99+" : badgeCount}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.badgeBtn}>
+              <Button
+                title="+1"
+                onPress={async () => {
+                  const next = badgeCount + 1;
+                  await ExpoJpush.setBadgeNumber({ badge: next });
+                  setBadgeCount(next);
+                  addLog(`setBadgeNumber(${next})`);
+                }}
+              />
+            </View>
+          </View>
           <Spacer />
           <Button
-            title="setBadgeNumber(0)"
+            title="清除角标"
             onPress={async () => {
               await ExpoJpush.setBadgeNumber({ badge: 0 });
+              setBadgeCount(0);
               addLog("setBadgeNumber(0) done");
             }}
           />
@@ -399,5 +426,34 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#888",
     fontStyle: "italic",
+  },
+  badgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 16,
+    marginVertical: 8,
+  },
+  badgeBtn: {
+    flex: 1,
+  },
+  badgeDisplay: {
+    alignItems: "center",
+    justifyContent: "center",
+    width: 56,
+  },
+  badgeCircle: {
+    backgroundColor: "#ff3b30",
+    borderRadius: 20,
+    minWidth: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 8,
+  },
+  badgeText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });

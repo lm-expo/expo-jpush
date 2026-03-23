@@ -1,5 +1,6 @@
 #import "ExpoJpushNativeBridge.h"
 #import "JPUSHService.h"
+#import <UIKit/UIKit.h>
 #import <UserNotifications/UserNotifications.h>
 
 @implementation ExpoJpushNativeBridge
@@ -56,6 +57,13 @@ apsForProduction:(BOOL)apsForProduction
 + (void)setBadge:(NSInteger)badge
 {
   [JPUSHService setBadge:badge];
+  dispatch_async(dispatch_get_main_queue(), ^{
+    if (@available(iOS 16.0, *)) {
+      [[UNUserNotificationCenter currentNotificationCenter] setBadgeCount:badge withCompletionHandler:nil];
+    } else {
+      [UIApplication sharedApplication].applicationIconBadgeNumber = badge;
+    }
+  });
 }
 
 // ---- NotificationCenter 通知名 ----
