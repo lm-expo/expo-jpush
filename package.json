@@ -1,5 +1,5 @@
 {
-  "name": "@lm/expo-jpush",
+  "name": "lm-expo-jpush",
   "version": "1.0.6",
   "description": "Linkmore Expo JPush",
   "main": "build/index.js",
@@ -40,6 +40,9 @@
     "plugin/build"
   ],
   "homepage": "https://github.com/enochjs/expo-jpush/expo-jpush#readme",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
   "dependencies": {},
   "devDependencies": {
     "@types/react": "~19.1.0",

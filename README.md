@@ -1,6 +1,6 @@
 # expo-jpush
 
-My new module
+Expo JPush module for Expo / React Native projects.
 
 # API documentation
 
@@ -17,8 +17,8 @@ For bare React Native projects, you must ensure that you have [installed and con
 
 ### Add the package to your npm dependencies
 
-```
-npm install expo-jpush
+```bash
+npm install lm-expo-jpush
 ```
 
 ### Configure for Android
@@ -29,6 +29,24 @@ npm install expo-jpush
 ### Configure for iOS
 
 Run `npx pod-install` after installing the npm package.
+
+# Publish to npm
+
+This repository is configured to publish to the public npm registry:
+
+```bash
+npm install
+npm run build
+npm run build:plugin
+npm pack --dry-run
+```
+
+After verifying the package contents, bump the version and publish:
+
+```bash
+npm version patch
+npm publish
+```
 
 # Contributing
 
